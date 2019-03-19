@@ -8,14 +8,21 @@ import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+
+import org.hibernate.annotations.OrderBy;
+import org.hibernate.annotations.Sort;
+import org.hibernate.annotations.SortNatural;
+import org.hibernate.annotations.SortType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import javax.persistence.OrderColumn;
 import javax.validation.Valid;
 import java.net.URI;
+import java.util.Iterator;
 import java.util.List;
 
 
@@ -26,15 +33,22 @@ public class ProductController {
 
     @Autowired
     private ProductDao productDao;
+    private int resultat;
 
 
     //Récupérer la liste des produits
 
     @RequestMapping(value = "/Produits", method = RequestMethod.GET)
-
     public MappingJacksonValue listeProduits() {
 
+    	
         Iterable<Product> produits = productDao.findAll();
+        
+        produits.forEach(pr->{
+        	System.out.println(pr.toString());
+        	System.out.println(calculerMargeProduit(pr.getId(), pr));
+        	
+        });
 
         SimpleBeanPropertyFilter monFiltre = SimpleBeanPropertyFilter.serializeAllExcept("prixAchat");
 
@@ -103,6 +117,19 @@ public class ProductController {
         return productDao.chercherUnProduitCher(400);
     }
 
+    
+    @GetMapping(value = "/calculerMargeProduit/{id}")
 
+    public int calculerMargeProduit(@PathVariable int id,@PathVariable Product product) {
+        Product produit = productDao.findById(id);
+       resultat=produit.getPrix()-produit.getPrixAchat();
+     //  System.out.println(resultat);
+        return resultat;
+    }
 
+    //method qui retourn la liste des produits par order croissant des noms
+   @GetMapping(value="/prodtrier")
+   public List<Product> getAll(){
+	   return productDao.findAllByOrderByNom();
+   }
 }
